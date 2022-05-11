@@ -1,98 +1,278 @@
 package com.example.minesweepernew;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class Main extends Application {
-    @Override
-    public void start(Stage stage) {
-        alusta(stage);
-    }
 
     public static void main(String[] args) {
-        launch();
+        launch(args);
     }
 
-    public static void alusta(Stage stage){
+    @Override
+    public void start(Stage stage) {
+        // Kõigepealt avatakse tutvustav aken koos tekstiväljaga, kus küsitakse soovitud välja suurust
+        VBox juur = new VBox();
+        juur.setPadding(new Insets(5, 5, 5, 5));
+        juur.setSpacing(10);
 
-        int suurus = suurus();
+        Text juhised = new Text("""
+                Minesweeper
+                                
+                Mängijale on ette antud varjatud väli, kus osad ruudud on miinid.
+                Mängu eesmärgiks on nähtavaks muuta kõik tühjad ruudud,
+                kasutades ära fakti, et tühjad ruudud näitavad mitut miini nad puudutavad.
+                Mängija võidab mängu, kui kõik tühjad ruudud on nähtavad.""");
+        juhised.setStyle("-fx-font-size: 14");
 
-        // Loome programmi maastiku
-        GridPane gridPane = new GridPane();
-        gridPane.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        ObservableList<ColumnConstraints> colCconstraints = gridPane.getColumnConstraints();
-        colCconstraints.clear();
-        for(int col = 0; col < 10; col++){
-            ColumnConstraints c = new ColumnConstraints();
-            c.setHalignment(HPos.CENTER);
-            c.setHgrow(Priority.ALWAYS);
-            colCconstraints.add(c);
-        }
-        ObservableList<RowConstraints> rowCconstraints = gridPane.getRowConstraints();
-        rowCconstraints.clear();
-        for(int row = 0; row < 10; row++){
-            RowConstraints c = new RowConstraints();
-            c.setValignment(VPos.CENTER);
-            c.setVgrow(Priority.ALWAYS);
-            rowCconstraints.add(c);
-        }
+        Text küsimus = new Text("Sisesta soovitud välja suurus (2 - 20)");
+        küsimus.setStyle("-fx-font-size: 14");
 
-        Väli väli = new Väli(10,20,gridPane);
+        TextField tekstiväli = new TextField();
+        tekstiväli.setMaxWidth(200);
 
-        Scene scene = new Scene(gridPane);
-        stage.setTitle("Minesweeper");
-        stage.setScene(scene);
-        stage.show();
-    }
+        Button kinnitus = new Button("OK");
+        kinnitus.setOnMouseClicked(event -> {
+            // Peale nupuvajutust üritatakse tekst muuta täisarvuks ning alustada mäng
+            try {
+                int suurus = Integer.parseInt(tekstiväli.getText());
 
-    private static int suurus(){
-        Stage stage = new Stage();
-        TilePane tilePane = new TilePane();
-        //TextInputControl
-        Label l = new Label();
-        TextInputDialog kasutajaSisend = new TextInputDialog("Sisestage soovitud välja suurus (<=20): ");
-        Button nupp = new Button("OK");
-        EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e)
-            {
-                // show the text input dialog
-                kasutajaSisend.showAndWait();
+                // Kui suurus ei jää lubatud vahemikku, visatakse ValeNumberErind
+                if (suurus < 2 || 20 < suurus)
+                    throw new ValeNumberErind("Vigane sisend, sisestasite: " + suurus);
 
-                // set the text of the label
-                l.setText(kasutajaSisend.getEditor().getText());
-            }
-        };
-        nupp.setOnAction(event);
-        Scene sc = new Scene(tilePane, 500, 300);
-        stage.setScene(sc);
-        stage.show();
-        return Integer.parseInt(l.getText());
-    }
+                alustaMäng(suurus);
+                stage.close();
 
-    public static void end(GridPane gridPane){
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setHeaderText(null);
-        alert.setGraphic(null);
-        alert.setTitle("Uus mäng?");
-        alert.setContentText("Kaotasite! Kas soovite uuesti mängida?");
-        ButtonType okButton = new ButtonType("Jah", ButtonBar.ButtonData.YES);
-        ButtonType noButton = new ButtonType("Ei", ButtonBar.ButtonData.NO);
-        alert.getButtonTypes().setAll(okButton, noButton);
-        alert.showAndWait().ifPresent(type -> {
-            if (type == okButton) {
-                gridPane.getChildren().clear();
-                Väli väli = new Väli(10,20,gridPane);
-            } else{
-                System.exit(0);
+            } catch (NumberFormatException e) {
+                // Kui tekstiväljal leitakse tähemärk
+                küsimus.setText("Sisesta soovitud välja suurus (2 - 20)\n" +
+                        "Vigane sisend, sisestasite: \"" + tekstiväli.getText() + "\"");
+
+                // Lavale antakse uus suurus koos uue minimaalse suurusega
+                stage.sizeToScene();
+                stage.setMinHeight(stage.getHeight());
+                stage.setMinWidth(stage.getWidth());
+
+            } catch (ValeNumberErind e) {
+                // Kui saadud suurus ei jää lubatud vahemikku
+                küsimus.setText("Sisesta soovitud välja suurus (2 - 20)\n" +
+                        e.getMessage());
+
+                // Lavale antakse uus suurus koos uue minimaalse suurusega
+                stage.sizeToScene();
+                stage.setMinHeight(stage.getHeight());
+                stage.setMinWidth(stage.getWidth());
             }
         });
+
+        juur.getChildren().addAll(juhised, küsimus, tekstiväli, kinnitus);
+
+        Scene sc = new Scene(juur);
+        stage.setTitle("Minesweeper");
+        stage.setScene(sc);
+        stage.show();
+
+        // Kitsendused teevad nii, et akent ei saa väiksemaks teha kui väli
+        stage.setMinHeight(stage.getHeight());
+        stage.setMinWidth(stage.getWidth());
+    }
+
+    public void alustaMäng(int suurus) {
+        // Alustatakse põhimänguga
+        Stage stage = new Stage();
+        BorderPane juur = new BorderPane();
+        juur.setPadding(new Insets(5, 5, 5, 5));
+
+        BorderPane bp = new BorderPane();
+        bp.setPadding(new Insets(5, 0, 5, 0));
+
+        GridPane gp = new GridPane();
+        // GridPane-le luuakse rea ja veeru kitsendused, et mäng käituks normaalselt akna suuruse muutumisele
+        looKitsendused(gp, suurus);
+
+        // Luuakse uus mänguväli
+        Väli väli = new Väli(suurus);
+        // GridPane-le luuakse mänguväljale vastav ruudustik
+        looRuudustik(väli, gp, suurus, stage);
+
+        Button uusMäng = new Button("Uus mäng");
+        uusMäng.setOnMouseClicked(event -> küsiUusMäng(gp, "", stage));
+
+        // TODO element, mis loeb aega
+        // Samuti element, mis näitab seni kiiremat aega
+        Text aeg = new Text("Aeg");
+
+        bp.setLeft(uusMäng);
+        bp.setRight(aeg);
+
+        juur.setTop(bp);
+        juur.setCenter(gp);
+
+        Scene sc = new Scene(juur);
+        stage.setScene(sc);
+        stage.setTitle("Minesweeper");
+        stage.show();
+
+        // Kitsendused teevad nii, et akent ei saa väiksemaks teha kui väli
+        stage.setMinHeight(stage.getHeight());
+        stage.setMinWidth(stage.getWidth());
+    }
+
+    private void looKitsendused(GridPane gp, int suurus) {
+        // GridPane-le luuakse rea ja veeru kitsendused, et mäng käituks normaalselt akna suuruse muutumisele
+        ObservableList<RowConstraints> reaKitsendus = gp.getRowConstraints();
+        reaKitsendus.clear();
+
+        ObservableList<ColumnConstraints> veeruKitsendus = gp.getColumnConstraints();
+        veeruKitsendus.clear();
+
+        for (int i = 0; i < suurus; i++) {
+            RowConstraints rida = new RowConstraints();
+            rida.setValignment(VPos.CENTER);
+            rida.setVgrow(Priority.ALWAYS);
+            reaKitsendus.add(rida);
+
+            ColumnConstraints veerg = new ColumnConstraints();
+            veerg.setHalignment(HPos.CENTER);
+            veerg.setHgrow(Priority.ALWAYS);
+            veeruKitsendus.add(veerg);
+        }
+    }
+
+    private void küsiUusMäng(GridPane gp, String sõnum, Stage peaStage) {
+        // Avatakse uus aken, mille luuakse uus mänguväli soovitud suurusega
+        Stage stage = new Stage();
+
+        // Kitsendus, mis ei lase samal ajal tegeleda mänguaknaga
+        stage.setOnCloseRequest(event -> Platform.exit());
+        stage.initModality(Modality.WINDOW_MODAL);
+        stage.initOwner(peaStage);
+
+        VBox juur = new VBox();
+        juur.setPadding(new Insets(5, 5, 5, 5));
+        juur.setSpacing(10);
+
+        String küsimuseTekst;
+        if (sõnum.equals("")) {
+            küsimuseTekst = "Sisesta soovitud välja suurus (2 - 20)";
+        } else {
+            küsimuseTekst = sõnum + "\n\nSisesta soovitud välja suurus (2 - 20)";
+        }
+        Text küsimus = new Text(küsimuseTekst);
+        küsimus.setStyle("-fx-font-size: 14");
+
+        TextField tekstiväli = new TextField();
+        tekstiväli.setMaxWidth(200);
+
+        Button kinnitus = new Button("OK");
+        kinnitus.setOnMouseClicked(event1 -> {
+            try {
+                // Peale nupuvajutust üritatakse tekst muuta täisarvuks ning luua uus mänguväli
+                int suurus = Integer.parseInt(tekstiväli.getText());
+
+                // Kui suurus ei jää lubatud vahemikku, visatakse ValeNumberErind
+                if (suurus < 2 || 20 < suurus)
+                    throw new ValeNumberErind("Vigane sisend, sisestasite: " + suurus);
+
+                // Luuakse uus väli uue suurusega
+                Väli uusVäli = new Väli(suurus);
+                // GridPane eelnevad ruudud kustutakse
+                gp.getChildren().clear();
+
+                // Luuakse rea- ja veerukitsendused ning uus nuppudest ruudustik
+                looKitsendused(gp, suurus);
+                looRuudustik(uusVäli, gp, suurus, peaStage);
+
+                // Pealavale antakse uus suurus koos uue minimaalse suurusega
+                peaStage.sizeToScene();
+                peaStage.setMinHeight(peaStage.getHeight());
+                peaStage.setMinWidth(peaStage.getWidth());
+                stage.close();
+
+            } catch (NumberFormatException e) {
+                // Kui tekstiväljal leitakse tähemärk
+                küsimus.setText(küsimuseTekst +
+                        "\nVigane sisend, sisestasite: \"" + tekstiväli.getText() + "\"");
+
+                // Lavale antakse uus suurus koos uue minimaalse suurusega
+                stage.sizeToScene();
+                stage.setMinHeight(stage.getHeight());
+                stage.setMinWidth(stage.getWidth());
+
+            } catch (ValeNumberErind e) {
+                // Kui saadud suurus ei jää lubatud vahemikku
+                küsimus.setText(küsimuseTekst + "\n" +
+                        e.getMessage());
+
+                // Lavale antakse uus suurus koos uue minimaalse suurusega
+                stage.sizeToScene();
+                stage.setMinHeight(stage.getHeight());
+                stage.setMinWidth(stage.getWidth());
+            }
+        });
+
+        juur.getChildren().addAll(küsimus, tekstiväli, kinnitus);
+
+        Scene sc = new Scene(juur);
+        stage.setTitle("Minesweeper");
+        stage.setScene(sc);
+        stage.show();
+        stage.setMinHeight(stage.getHeight());
+        stage.setMinWidth(stage.getWidth());
+    }
+
+    private void looRuudustik(Väli väli, GridPane gp, int suurus, Stage peaStage) {
+        // GridPane-le luuakse nuppudest ruudustik, mis vastav mänguväljale
+        for (int i = 0; i < suurus; i++) {
+            for (int j = 0; j < suurus; j++) {
+                int rida = i;
+                int veerg = j;
+
+                // Luuakse nupp koos kitsendustega
+                Button nupp = new Button(väli.getRuut(rida, veerg).toString());
+                nupp.setMinSize(30, 30);
+                nupp.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+                nupp.setPrefSize(30, 30);
+                nupp.setStyle("-fx-background-color: #CACACA; -fx-border-color: #838383; -fx-border-width: 1px; -fx-background-radius: 0");
+
+                nupp.setOnMouseClicked(event -> {
+                    // Väljal avaldatakse ruut või ruudud
+                    väli.avaldaRuut(rida, veerg);
+
+                    // Kui avaldatud ruut on miin, siis mängija kaotab mängu
+                    if (väli.getRuut(rida, veerg).isMiin()) {
+                        väli.avaldaKõik();
+                        küsiUusMäng(gp, "Kaotasite, kuna läksite miini pihta!", peaStage);
+                    }
+
+                    // Kui varjatud mittemiine enam ei leidu, siis on mängija võitnud
+                    else if (väli.eiLeiduVarjatud()) {
+                        // TODO kirjuta kiirus üle
+                        küsiUusMäng(gp, "Võitsite, palju õnne!", peaStage);
+                    }
+                });
+
+                // Lisatakse kuulaja, mis muudab nupu teksti siis, kui mänguväljal ruut avaldatakse
+                väli.getRuut(rida, veerg).getNähtav().addListener((o, v, n) -> {
+                    nupp.setStyle("-fx-background-color: #AEAEAE; -fx-border-color: #838383; -fx-border-width: 1px; -fx-background-radius: 0");
+                    nupp.setText(väli.getRuut(rida, veerg).toString());
+                });
+
+                // Nupp lisatakse GridPane-le
+                gp.add(nupp, i, j);
+            }
+        }
     }
 }
