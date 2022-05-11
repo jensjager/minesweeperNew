@@ -10,10 +10,8 @@ public class TühiRuut extends Ruudud {
     // Ülekate
     @Override
     public String toString() {
-        if (isNähtav()) {
-            if (getMitu() > 0) return String.valueOf(getMitu());
-            else return " ";
-        }
-        return super.toString();
+        if (isNähtav() && getMitu() > 0)
+            return String.valueOf(getMitu());
+        else return super.toString();
     }
 }

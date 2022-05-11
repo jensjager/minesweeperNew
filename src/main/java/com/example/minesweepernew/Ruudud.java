@@ -1,24 +1,31 @@
 package com.example.minesweepernew;
 
+import javafx.beans.property.SimpleBooleanProperty;
+
 public class Ruudud {
 
     // Isendiväljad
     private boolean miin;
-    private boolean nähtav = false;
+    private SimpleBooleanProperty nähtav;
     private int mitu;
 
     // Konstruktor
     public Ruudud(boolean miin) {
         this.miin = miin;
+        this.nähtav = new SimpleBooleanProperty(false);
     }
 
     // Meetodid
     public boolean isNähtav() {
+        return nähtav.getValue();
+    }
+
+    public SimpleBooleanProperty getNähtav() {
         return nähtav;
     }
 
     public void setNähtav() {
-        this.nähtav = true;
+        this.nähtav.setValue(true);
     }
 
     public boolean isMiin() {
@@ -35,6 +42,6 @@ public class Ruudud {
 
     @Override
     public String toString() {
-        return " ";
+        return "";
     }
 }
