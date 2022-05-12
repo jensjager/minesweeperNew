@@ -19,11 +19,15 @@ public class Väli {
         return väli[i][j];
     }
 
+    public int getSuurus() {
+        return suurus;
+    }
+
     // Meetod loob väljale Miinid
     public void looVäli() {
         for (int i = 0; i < suurus; i++) {
             for (int j = 0; j < suurus; j++) {
-                if (Math.random() < 0.2) {
+                if (Math.random() < 0.15) {
                     väli[i][j] = new Miin();
                 } else {
                     väli[i][j] = new TühiRuut();
