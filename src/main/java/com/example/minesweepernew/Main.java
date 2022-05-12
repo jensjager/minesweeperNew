@@ -102,6 +102,9 @@ public class Main extends Application {
         // GridPane-le luuakse rea ja veeru kitsendused, et mäng käituks normaalselt akna suuruse muutumisele
         looKitsendused(gp, suurus);
 
+        // Luuakse stopperi isend aja võtmiseks
+        Stopper stopper = new Stopper();
+
         // Luuakse uus mänguväli
         Väli väli = new Väli(suurus);
         // GridPane-le luuakse mänguväljale vastav ruudustik
@@ -124,6 +127,9 @@ public class Main extends Application {
         stage.setScene(sc);
         stage.setTitle("Minesweeper");
         stage.show();
+
+        // Stopper alustab tööd
+        stopper.start();
 
         // Kitsendused teevad nii, et akent ei saa väiksemaks teha kui väli
         stage.setMinHeight(stage.getHeight());
@@ -201,6 +207,10 @@ public class Main extends Application {
                 peaStage.setMinWidth(peaStage.getWidth());
                 stage.close();
 
+                // Stopper alustab algusest
+                stopper.restart();
+                stopper.start();
+
             } catch (NumberFormatException e) {
                 // Kui tekstiväljal leitakse tähemärk
                 küsimus.setText(küsimuseTekst +
@@ -253,14 +263,21 @@ public class Main extends Application {
 
                     // Kui avaldatud ruut on miin, siis mängija kaotab mängu
                     if (väli.getRuut(rida, veerg).isMiin()) {
+                        // Stopper peatatakse
+                        stopper.stop();
+
                         väli.avaldaKõik();
                         küsiUusMäng(gp, "Kaotasite, kuna läksite miini pihta!", peaStage);
                     }
 
                     // Kui varjatud mittemiine enam ei leidu, siis on mängija võitnud
                     else if (väli.eiLeiduVarjatud()) {
-                        // TODO kirjuta kiirus üle
-                        küsiUusMäng(gp, "Võitsite, palju õnne!", peaStage);
+                        // Stopper peatatakse
+                        stopper.stop();
+
+                        // Kui välja suurus on suurem kui 9 ning tehti aja poolest rekord, siis see salvestatakse
+                        stopper.salvestaParim(väli.getSuurus());
+                        küsiUusMäng(gp, "Võitsite, palju õnne!\nTeie aeg: " + stopper.getAeg().getText(), peaStage, stopper);
                     }
                 });
 
