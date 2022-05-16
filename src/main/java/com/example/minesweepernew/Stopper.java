@@ -87,7 +87,7 @@ public class Stopper {
             // Kui välja suurus on üle 9 ning võidu aeg on parimast kiirem
             if (parim.equals("puudub") || aeg < aegInt(parim)) {
                 String uusParim = aegString(aeg);
-                setParimAeg("Parim aeg:" + uusParim);
+                setParimAeg("Parim aeg: " + uusParim);
                 salvesta(aeg);
             }
         }
