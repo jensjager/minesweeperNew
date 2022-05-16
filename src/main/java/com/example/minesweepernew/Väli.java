@@ -64,6 +64,9 @@ public class Väli {
     public void avaldaKõik() {
         for (int i = 0; i < suurus; i++) {
             for (int j = 0; j < suurus; j++) {
+                // Kuna seda meetodit kasutatakse kaotatud mängu korral,
+                // siis avaldatakse kõik ruudud
+                väli[i][j].setLipp(false);
                 avaldaRuut(i, j);
             }
         }
@@ -82,18 +85,22 @@ public class Väli {
     // Meetod avaldab varjatud ruudu(d)
     public void avaldaRuut(int rida, int veerg) {
         Ruudud ruut = väli[rida][veerg];
-        if (!ruut.isNähtav()) {
-            ruut.setNähtav();
-        }
 
-        // Kui tühi ruut ei puuduta ühtegi miini, siis avaldatakse ka tema naaberruudud
-        if (ruut.getMitu() == 0) {
-            for (int i = rida - 1; i < rida + 2 && i < väli.length; i++) {
-                if (i < 0) i = 0;
-                for (int j = veerg - 1; j < veerg + 2 && j < väli.length; j++) {
-                    if (j < 0) j = 0;
-                    if (i == rida && j == veerg) continue;
-                    if (!väli[i][j].isNähtav()) avaldaRuut(i, j);
+        // Kui antud ruut on märgitud lipuna, siis sellega ei tehta midagi
+        if (!ruut.isLipp()) {
+            if (!ruut.isNähtav()) {
+                ruut.setNähtav();
+            }
+
+            // Kui tühi ruut ei puuduta ühtegi miini, siis avaldatakse ka tema naaberruudud
+            if (ruut.getMitu() == 0) {
+                for (int i = rida - 1; i < rida + 2 && i < väli.length; i++) {
+                    if (i < 0) i = 0;
+                    for (int j = veerg - 1; j < veerg + 2 && j < väli.length; j++) {
+                        if (j < 0) j = 0;
+                        if (i == rida && j == veerg) continue;
+                        if (!väli[i][j].isNähtav()) avaldaRuut(i, j);
+                    }
                 }
             }
         }

@@ -9,6 +9,7 @@ import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
@@ -34,6 +35,9 @@ public class Main extends Application {
                 Mängu eesmärgiks on nähtavaks muuta kõik tühjad ruudud,
                 kasutades ära fakti, et tühjad ruudud näitavad mitut miini nad puudutavad.
                 Mängija võidab mängu, kui kõik tühjad ruudud on nähtavad.
+                                
+                Et mängijal oleks kergem pildist aru saada, siis parema hiireklõpsuga
+                saab potentsiaalseid miine ära märkida lipuga.
                                 
                 Parim aeg salvestatakse siis, kui välja suurus on suurem kui 9""");
         juhised.setStyle("-fx-font-size: 14");
@@ -261,26 +265,37 @@ public class Main extends Application {
                         "-fx-border-width: 1px; -fx-background-radius: 0");
 
                 nupp.setOnMouseClicked(event -> {
-                    // Väljal avaldatakse ruut või ruudud
-                    väli.avaldaRuut(rida, veerg);
 
-                    // Kui avaldatud ruut on miin, siis mängija kaotab mängu
-                    if (väli.getRuut(rida, veerg).isMiin()) {
-                        // Stopper peatatakse
-                        stopper.stop();
+                    // Kui toimus vasak hiireklõps
+                    if (event.getButton() == MouseButton.PRIMARY) {
+                        // Väljal avaldatakse ruut või ruudud
+                        väli.avaldaRuut(rida, veerg);
 
-                        väli.avaldaKõik();
-                        küsiUusMäng(gp, "Kaotasite, kuna läksite miini pihta!", peaStage, stopper);
+                        // Kui valitud ruut on miin ja ta pole märgitud lipuga, siis mängija kaotab mängu
+                        if (väli.getRuut(rida, veerg).isMiin() && !väli.getRuut(rida, veerg).isLipp()) {
+                            // Stopper peatatakse
+                            stopper.stop();
+
+                            väli.avaldaKõik();
+                            küsiUusMäng(gp, "Kaotasite, kuna läksite miini pihta!", peaStage, stopper);
+                        }
+
+                        // Kui varjatud mittemiine enam ei leidu, siis on mängija võitnud
+                        else if (väli.eiLeiduVarjatud()) {
+                            // Stopper peatatakse
+                            stopper.stop();
+
+                            // Kui välja suurus on suurem kui 9 ning tehti aja poolest rekord, siis see salvestatakse
+                            stopper.salvestaParim(väli.getSuurus());
+                            küsiUusMäng(gp, "Võitsite, palju õnne!\nTeie aeg: " + stopper.getAeg().getText(), peaStage, stopper);
+                        }
                     }
 
-                    // Kui varjatud mittemiine enam ei leidu, siis on mängija võitnud
-                    else if (väli.eiLeiduVarjatud()) {
-                        // Stopper peatatakse
-                        stopper.stop();
-
-                        // Kui välja suurus on suurem kui 9 ning tehti aja poolest rekord, siis see salvestatakse
-                        stopper.salvestaParim(väli.getSuurus());
-                        küsiUusMäng(gp, "Võitsite, palju õnne!\nTeie aeg: " + stopper.getAeg().getText(), peaStage, stopper);
+                    // Kui toimus parem hiireklõps ja ruut ei ole nähtav
+                    else if (event.getButton() == MouseButton.SECONDARY && !väli.getRuut(rida, veerg).isNähtav()) {
+                        Ruudud ruut = väli.getRuut(rida, veerg);
+                        // Ruudule kas lisatakse või võetakse lipp ära
+                        ruut.setLipp(!ruut.isLipp());
                     }
                 });
 
@@ -290,6 +305,10 @@ public class Main extends Application {
                             "-fx-border-width: 1px; -fx-background-radius: 0");
                     nupp.setText(väli.getRuut(rida, veerg).toString());
                 });
+
+                // Lisatakse kuulaja, mis muudab nupu teksti lipuks siis, kui toimub lipumuutus
+                väli.getRuut(rida, veerg).getLipp().addListener((o, v, n) ->
+                        nupp.setText(väli.getRuut(rida, veerg).toString()));
 
                 // Nupp lisatakse GridPane-le
                 gp.add(nupp, i, j);

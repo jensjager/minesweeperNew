@@ -6,6 +6,7 @@ public class Ruudud {
 
     // Isendiväljad
     private boolean miin;
+    private SimpleBooleanProperty lipp;
     private SimpleBooleanProperty nähtav;
     private int mitu;
 
@@ -13,6 +14,7 @@ public class Ruudud {
     public Ruudud(boolean miin) {
         this.miin = miin;
         this.nähtav = new SimpleBooleanProperty(false);
+        this.lipp = new SimpleBooleanProperty(false);
     }
 
     // Meetodid
@@ -26,6 +28,18 @@ public class Ruudud {
 
     public void setNähtav() {
         this.nähtav.setValue(true);
+    }
+
+    public boolean isLipp() {
+        return this.lipp.getValue();
+    }
+
+    public SimpleBooleanProperty getLipp() {
+        return lipp;
+    }
+
+    public void setLipp(boolean lipp) {
+        this.lipp.set(lipp);
     }
 
     public boolean isMiin() {
@@ -42,6 +56,9 @@ public class Ruudud {
 
     @Override
     public String toString() {
-        return "";
+        if (lipp.getValue())
+            return "⚑";
+        else
+            return "";
     }
 }
